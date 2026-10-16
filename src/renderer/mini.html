@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'">
+  <title>Таймер задержания</title>
+  <style>
+    html, body { margin: 0; height: 100%; background: transparent; overflow: hidden; user-select: none;
+      font: 13px/1.3 "Segoe UI", system-ui, sans-serif; color: #dbe4ee; }
+    .box { position: absolute; inset: 4px; display: flex; align-items: center; gap: 12px; padding: 8px 12px;
+      border-radius: 14px; background: rgba(12, 17, 23, .9); border: 1px solid rgba(160, 185, 215, .2);
+      box-shadow: 0 6px 18px rgba(0, 0, 0, .5); -webkit-app-region: drag; }
+    .box.paused { border-color: #e0a83a; }
+    .box.expired { border-color: #e06a5c; }
+    .time { font: 600 28px/1 "Cascadia Mono", Consolas, monospace; letter-spacing: .02em; min-width: 92px; }
+    .paused .time { color: #e0a83a; }
+    .expired .time { color: #e06a5c; }
+    .info { flex: 1; min-width: 0; }
+    .label { font: 600 10px/1 "Cascadia Mono", Consolas, monospace; letter-spacing: .1em; color: #8193a8; }
+    .sub { margin-top: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .sub + .sub { margin-top: 2px; color: #8193a8; font-size: 12px; }
+    button { -webkit-app-region: no-drag; border: 0; background: rgba(255, 255, 255, .08); color: #dbe4ee;
+      width: 24px; height: 24px; border-radius: 6px; cursor: pointer; align-self: flex-start; }
+    button:hover { background: rgba(255, 255, 255, .16); }
+  </style>
+</head>
+<body>
+  <div class="box" id="box">
+    <div class="time" id="time">60:00</div>
+    <div class="info">
+      <div class="label" id="label">ЗАДЕРЖАНИЕ</div>
+      <div class="sub" id="sub1"></div>
+      <div class="sub" id="sub2"></div>
+    </div>
+    <button id="open" title="Открыть планшет">&#x2197;</button>
+  </div>
+  <script src="timer-view.js"></script>
+  <script src="mini.js"></script>
+</body>
+</html>

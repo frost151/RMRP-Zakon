@@ -1,0 +1,5 @@
+node_modules/
+dist/
+# установщик выкладывается в Releases на GitHub
+*.exe
+*.blockmap

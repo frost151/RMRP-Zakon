@@ -1,0 +1,55 @@
+{
+  "name": "rmrp-zakon",
+  "productName": "RMRP Zakon",
+  "version": "0.1.0",
+  "description": "Планшет-справочник законодательства РМРП для фракций",
+  "main": "src/main/index.js",
+  "scripts": {
+    "start": "electron .",
+    "icon": "electron build/make-icon.js",
+    "dist": "electron-builder --win nsis"
+  },
+  "keywords": [],
+  "author": "Артем Гольдрин (541-657)",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "cheerio": "^1.0.0"
+  },
+  "devDependencies": {
+    "electron": "^33.2.1",
+    "electron-builder": "^25.1.8"
+  },
+  "allowScripts": {
+    "electron@33.2.1": true
+  },
+  "build": {
+    "appId": "ru.rmrp.zakon",
+    "productName": "RMRP Zakon",
+    "copyright": "© Артем Гольдрин 541-657",
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "files": [
+      "src/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "build/icon.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "РМРП Закон",
+      "uninstallDisplayName": "РМРП Закон",
+      "artifactName": "RMRP-Zakon-Setup-${version}.${ext}",
+      "installerLanguages": ["ru_RU"],
+      "language": "1049"
+    }
+  }
+}

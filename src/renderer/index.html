@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:">
+  <title>РМРП Закон</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="tablet">
+    <div class="camera" aria-hidden="true"></div>
+    <div class="maker">Разработчик: Артем Гольдрин · 541-657</div>
+    <div class="bezel-version" id="bezelVersion"></div>
+    <div class="screen">
+      <div class="bg-emblem" id="bgEmblem" aria-hidden="true"></div>
+
+      <div class="statusbar">
+        <div class="sb-left">
+          <span class="sb-mark">ДСП</span>
+          <span class="sb-org" id="orgName">Правовая база Российской Федерации</span>
+        </div>
+        <div class="sb-clock" id="clock">--:--</div>
+        <div class="sb-right">
+          <span class="sb-sync" id="sync" title="Синхронизация с форумом">—</span>
+          <span class="sb-signal" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+          <span class="sb-battery" aria-hidden="true"><i></i></span>
+          <button class="wbtn" data-win="minimize" title="Свернуть">&#x2013;</button>
+          <button class="wbtn" data-win="hide" title="Скрыть (горячая клавиша вернёт)">&#x25BE;</button>
+          <button class="wbtn close" data-win="close" title="Закрыть программу">&#x2715;</button>
+        </div>
+      </div>
+
+      <div class="appbar">
+        <nav class="factions" id="factions" aria-label="Фракция"></nav>
+        <div class="search">
+          <input id="search" type="search" placeholder="Номера через пробел: «63 64 77», «коап 9.3» — Enter добавит в дело. Или слова: «превышение скорости»" autocomplete="off" spellcheck="false">
+        </div>
+        <button class="icon-btn" id="uiSound" title="Звуки интерфейса"></button>
+        <button class="icon-btn" id="refresh" title="Обновить законы с форума">&#x21BB;</button>
+        <button class="icon-btn" id="openSettings" title="Настройки">&#x2699;</button>
+      </div>
+
+      <div class="content">
+        <aside class="laws" id="laws"></aside>
+        <main class="viewer" id="viewer"></main>
+        <section class="panel" id="panel">
+          <div class="panel-tabs" role="tablist">
+            <button class="panel-toggle" id="panelToggle" title="Свернуть вправо">&#x00BB;</button>
+            <button role="tab" data-tab="case" aria-selected="true">Дело <span class="count" id="caseCount"></span></button>
+            <button role="tab" data-tab="det" data-tool="timers" aria-selected="false">Задержание <span class="dot" id="detDot"></span></button>
+          </div>
+          <div class="panel-body" id="panelBody"></div>
+        </section>
+      </div>
+      <div class="toasts" id="toasts" aria-live="polite"></div>
+
+      <div class="splash" id="splash" aria-hidden="true">
+        <div class="splash-center">
+          <div class="splash-emblem" id="splashEmblem"></div>
+          <div class="splash-logo">
+            <span class="splash-small">РМРП</span>
+            <span class="splash-big">Закон<sup>rp</sup></span>
+          </div>
+          <div class="splash-bar"><i></i><i></i><i></i></div>
+        </div>
+        <div class="splash-foot">Правовая база Российской Федерации</div>
+        <div class="splash-skip">Нажмите любую клавишу или кликните, чтобы пропустить</div>
+      </div>
+    </div>
+  </div>
+
+  <dialog id="settings">
+    <form method="dialog">
+      <h2>Настройки</h2>
+      <div class="row">
+        <span>Показать / скрыть планшет</span>
+        <button type="button" class="key-btn" data-hotkey="toggle">F9</button>
+      </div>
+      <div class="row" data-tool="timers">
+        <span>Начать задержание / пауза</span>
+        <button type="button" class="key-btn" data-hotkey="timer">F10</button>
+      </div>
+      <div class="row" data-tool="timers">
+        <span>Адвокат: вызов → ответил → прибыл</span>
+        <button type="button" class="key-btn" data-hotkey="lawyer">F11</button>
+      </div>
+      <p class="hint" id="hotkeyHint">Нажмите на кнопку, затем нужное сочетание клавиш.</p>
+      <label class="row">
+        <span>Поверх всех окон</span>
+        <input type="checkbox" id="onTop">
+      </label>
+      <p class="hint">Чтобы планшет было видно поверх GTA, включите в игре режим «Окно без рамки».</p>
+      <label class="row">
+        <span>Заставка при запуске</span>
+        <input type="checkbox" id="splashOn">
+      </label>
+      <p class="about">РМРП Закон <span id="appVersion"></span> · разработчик <b>Артем Гольдрин</b> · 541-657</p>
+      <div class="actions"><button value="close">Готово</button></div>
+    </form>
+  </dialog>
+
+  <script src="emblems.js"></script>
+  <script src="calc.js"></script>
+  <script src="timer-view.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
