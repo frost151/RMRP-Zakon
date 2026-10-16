@@ -60,7 +60,7 @@ function applyFaction() {
   }
   // инструменты, которых нет у фракции (у адвоката — задержание), скрываем
   for (const el of document.querySelectorAll('[data-tool]')) el.hidden = !f.tools.includes(el.dataset.tool);
-  if (state.tab === 'det' && !f.tools.includes('timers')) setTab('case');
+  if ((state.tab === 'det' && !f.tools.includes('timers')) || (state.tab === 'bail' && !f.tools.includes('bail'))) setTab('case');
 }
 
 async function selectFaction(key) {
@@ -432,6 +432,7 @@ function caseText() {
 function renderCase() {
   const count = state.picks.length;
   $('caseCount').textContent = count ? String(count) : '';
+  if (state.tab === 'bail') return renderBail();
   if (state.tab !== 'case') return;
   if (!count) {
     $('panelBody').innerHTML = `<div class="panel-empty">
@@ -511,6 +512,75 @@ function renderCase() {
       </div>
     </div>`;
   state.lastTotal = t;
+}
+
+// --- Залог (адвокат, УК 33) ---
+
+const caseCode = (p) => (p.code === p.num ? `ст. ${p.num}` : `ч. ${p.code}`);
+
+function bailCalc() {
+  const auto = window.calc.compute(state.picks, flags()).prison.max;
+  const term = state.bail.term ?? auto;
+  return { auto, ...window.calc.bail(state.picks, term, state.bail) };
+}
+
+function bailText(b) {
+  const arts = b.rows.map(({ it }) => `${it.code} УК РФ`).join(', ');
+  let text = `Залог по ${arts}: ${moneyRange(b.sum)} (УК 33.2, 33.3). Срок ${years(b.term)}`;
+  if (b.verdict.kind === 'release') text += ` — освобождение под залог (УК ${b.verdict.limit === 15 ? '33.7' : '33.5'}).`;
+  if (b.verdict.kind === 'reduce') text += ` — сокращение срока до ${years(b.verdict.to)} (УК 33.6, 33.9).`;
+  if (b.verdict.kind === 'banned') text += ' — в приговоре запрет залога (УК 33.8).';
+  return text;
+}
+
+function renderBail() {
+  if (!state.picks.some((p) => p.law === 'uk')) {
+    $('panelBody').innerHTML = `<div class="panel-empty">
+      <h3>Нет статей УК</h3>
+      <p>Добавьте в дело статьи УК, по которым человек отбывает наказание: нажмите на наказание под статьёй или введите номера в поиск — «63 64 77».</p>
+      <p>Залог считается по УК ст. 33: вилка по тяжести каждой статьи (УК 12), суммы складываются.</p>
+    </div>`;
+    return;
+  }
+  const b = bailCalc();
+  const rows = b.rows.map(({ it, cat }) => `<div class="case-item">
+      <div class="ci-head">
+        <span class="ci-code">УК ${esc(caseCode(it))}</span>
+        <span class="bail-cat">${esc(cat.name)}</span>
+        <button class="ci-del" data-unpick="${esc(it.id)}" title="Убрать из дела">✕</button>
+      </div>
+      <div class="ci-title" title="${esc(it.title)}">${esc(it.title)}</div>
+      <div class="ci-sanction"><span>до ${esc(years(it.sanction.prison.max))} → ${esc(moneyRange(cat))}</span><small class="muted">УК ${esc(cat.ref)}</small></div>
+    </div>`).join('');
+  const skipped = b.skipped.length ? `<div class="total-note">Не входят в залог: ${b.skipped.map(({ it, why }) => `${esc(it.lawShort)} ${esc(caseCode(it))} (${esc(why)})`).join(', ')}</div>` : '';
+  const v = b.verdict;
+  const verdict = {
+    none: '<div class="bail-verdict">В деле нет лишения свободы по УК — освобождать не от чего.</div>',
+    banned: '<div class="bail-verdict bad">В приговоре суда запрет освобождения под залог — нельзя ни освободить, ни сократить срок <small>УК 33.8</small></div>',
+    release: `<div class="bail-verdict ok">Освобождение под залог возможно: срок ${esc(years(b.term))} не больше ${v.limit} лет <small>УК ${v.limit === 15 ? '33.7' : '33.5'}</small></div>`,
+    reduce: `<div class="bail-verdict warn-v">Освободить нельзя (больше ${v.limit} лет), только сократить: ${esc(years(b.term))} → <b>${esc(years(v.to))}</b> <small>УК 33.6, 33.9: не ниже ${v.limit} лет, не больше чем на 2 года</small></div>`,
+  }[v.kind];
+  $('panelBody').innerHTML = `
+    <div class="case-list">
+      <div class="bail-hint">Перед освобождением заключите и опубликуйте договор оказания юридических услуг <small>УК 33.1</small></div>
+      ${rows}
+      ${skipped}
+    </div>
+    <div class="case-total">
+      <div class="total-rows">
+        <div class="tr"><span title="Вилка по УК 33.2, суммируется за каждую статью (33.3). Точная сумма по статье — по постановлению Адвокатской палаты (33.4)">Залог <small>УК 33.2</small></span><b>${b.rows.length ? esc(moneyRange(b.sum)) : '—'}</b></div>
+        <div class="tr"><span>Срок, лет ${state.bail.term != null ? `<button class="link-btn" id="bailAuto" title="Вернуть срок из дела (${b.auto})">из дела</button>` : '<small>из дела</small>'}</span>
+          <input type="number" id="bailTerm" class="bail-term" min="0" max="30" value="${b.term}"></div>
+      </div>
+      ${verdict}
+      <div class="bail-opts">
+        <label title="Президент / Вице-президент Адвокатской палаты освобождает при сроке до 15 лет (УК 33.7)"><input type="checkbox" data-bail="president" ${state.bail.president ? 'checked' : ''}> Президент палаты</label>
+        <label title="В приговоре суда запрет освобождения или сокращения срока под залог (УК 33.8)"><input type="checkbox" data-bail="banned" ${state.bail.banned ? 'checked' : ''}> Запрет в приговоре</label>
+      </div>
+      <div class="total-actions">
+        <button class="btn primary" id="copyBail" ${b.rows.length ? '' : 'disabled'}>Копировать расчёт</button>
+      </div>
+    </div>`;
 }
 
 // --- Задержание ---
@@ -903,6 +973,7 @@ function setTab(tab) {
   store.set('tab', tab);
   for (const b of document.querySelectorAll('[data-tab]')) b.setAttribute('aria-selected', String(b.dataset.tab === tab));
   if (tab === 'case') renderCase();
+  else if (tab === 'bail') renderBail();
   else renderDetention();
 }
 
@@ -933,7 +1004,7 @@ function setupEvents() {
     const pick = e.target.closest('[data-pick]');
     if (pick) {
       togglePick(pick.dataset.pick);
-      if (state.tab !== 'case') setTab('case');
+      if (state.tab === 'det') setTab('case');
       afterPicksChanged();
       return;
     }
@@ -942,7 +1013,7 @@ function setupEvents() {
         const id = pickTarget(r);
         if (id) togglePick(id, true);
       }
-      setTab('case');
+      if (state.tab === 'det') setTab('case');
       afterPicksChanged();
     }
   });
@@ -954,6 +1025,17 @@ function setupEvents() {
     // клик по вкладке на свёрнутой полосе — развернуть
     if (state.panelCollapsed) setPanelCollapsed(false);
     setTab(b.dataset.tab);
+  });
+
+  $('panelBody').addEventListener('change', (e) => {
+    const t = e.target;
+    if (t.dataset.bail) { state.bail[t.dataset.bail] = t.checked; store.set('bail', state.bail); renderBail(); }
+    if (t.id === 'bailTerm') {
+      const n = Math.max(0, Math.min(30, Math.round(Number(t.value) || 0)));
+      state.bail.term = n;
+      store.set('bail', state.bail);
+      renderBail();
+    }
   });
 
   $('panelBody').addEventListener('click', (e) => {
@@ -989,6 +1071,12 @@ function setupEvents() {
       }
       store.set('picks', state.picks);
       renderCase();
+    }
+    if (t.id === 'bailAuto') { state.bail.term = null; store.set('bail', state.bail); renderBail(); }
+    if (t.id === 'copyBail') {
+      const text = bailText(bailCalc());
+      window.api.copy(text);
+      toast(`Скопировано: ${text}`);
     }
     if (t.id === 'clearCase') { state.picks = []; store.set('picks', []); afterPicksChanged(); }
     if (t.id === 'copyCase') {
@@ -1078,6 +1166,7 @@ function tickClock() {
   $('bezelVersion').textContent = init.version ? `v${init.version}` : '';
   state.picks = store.get('picks', []);
   state.checklist = store.get('checklist', {});
+  state.bail = { president: false, banned: false, term: null, ...store.get('bail', {}) };
   state.tab = store.get('tab', 'case');
   setLaws(init.laws);
   if (!state.factions[state.settings.faction]) state.settings.faction = 'all';

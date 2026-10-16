@@ -183,7 +183,40 @@
     return t;
   }
 
-  const api = { compute, modes, licenseIsAlternative, defaultMode, refusalMode, fineOf, unpaidPart, inList, stars, LISTS };
+  // УК 12 — категория преступления по максимальному сроку лишения свободы; УК 33.2 — залог по категории
+  const BAIL = [
+    { upTo: 2, name: 'небольшой тяжести', min: 20000, max: 40000, ref: '33.2 «а»' },
+    { upTo: 5, name: 'средней тяжести', min: 50000, max: 90000, ref: '33.2 «б»' },
+    { upTo: 10, name: 'тяжкое', min: 100000, max: 200000, ref: '33.2 «в»' },
+    { upTo: Infinity, name: 'особо тяжкое', min: 200000, max: 300000, ref: '33.2 «г»' },
+  ];
+  const bailCategory = (years) => BAIL.find((c) => years <= c.upTo);
+
+  // Освобождение под залог (УК 33): term — общий срок в годах, president — Президент / Вице-президент палаты,
+  // banned — в приговоре запрет залога
+  function bail(items, term, { president = false, banned = false } = {}) {
+    const rows = [];
+    const skipped = [];
+    const sum = { min: 0, max: 0 };
+    for (const it of items) {
+      if (it.law !== 'uk') { skipped.push({ it, why: 'не УК — в залог не входит' }); continue; }
+      if (!it.sanction.prison) { skipped.push({ it, why: 'нет лишения свободы' }); continue; }
+      if (it.mode !== 'prison') { skipped.push({ it, why: 'назначен не срок' }); continue; }
+      const cat = bailCategory(it.sanction.prison.max);
+      sum.min += cat.min; // УК 33.3 — залог суммируется за каждую статью
+      sum.max += cat.max;
+      rows.push({ it, cat });
+    }
+    const limit = president ? 15 : 8; // УК 33.5, 33.7
+    let verdict;
+    if (!rows.length || !term) verdict = { kind: 'none' };
+    else if (banned) verdict = { kind: 'banned' };
+    else if (term <= limit) verdict = { kind: 'release', limit };
+    else verdict = { kind: 'reduce', limit, to: Math.max(limit, term - 2) }; // УК 33.6, 33.9
+    return { rows, skipped, sum, term, verdict };
+  }
+
+  const api = { compute, bail, bailCategory, BAIL, modes, licenseIsAlternative, defaultMode, refusalMode, fineOf, unpaidPart, inList, stars, LISTS };
   if (typeof module !== 'undefined') module.exports = api;
   else window.calc = api;
 })();

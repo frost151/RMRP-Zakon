@@ -42,7 +42,7 @@ const FACTIONS = {
     org: 'Правовая база Российской Федерации',
     color: '#8fa3bb',
     docs: ['konst', 'uk', 'koap', 'pk', 'upk', 'pdd'],
-    tools: ['calc', 'timers'],
+    tools: ['calc', 'timers', 'bail'],
   },
   gibdd: {
     name: 'ГИБДД',
