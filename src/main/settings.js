@@ -8,8 +8,8 @@ const DEFAULTS = {
   // toggle — показать/скрыть планшет, timer — старт/пауза задержания, lawyer — шаг ожидания адвоката
   hotkeys: { toggle: 'F9', timer: 'F10', lawyer: 'F11' },
   alwaysOnTop: true,
-  splash: true, // заставка при запуске
-  uiSound: true, // мелодия включения и звук смены фракции (звуки таймера не выключаются)
+  // звуки: мелодия заставки, звуки интерфейса (смена фракции), сигналы таймера задержания
+  sounds: { startup: true, ui: true, timer: true },
   bounds: null,
   miniPos: null,
 };
@@ -25,8 +25,15 @@ class Settings {
         saved.hotkeys = { ...DEFAULTS.hotkeys, ...saved.hotkeys, toggle: saved.hotkey };
         delete saved.hotkey;
       }
+      // раньше был один выключатель uiSound — для мелодии и смены фракции
+      if ('uiSound' in saved) {
+        saved.sounds = { ...DEFAULTS.sounds, startup: saved.uiSound, ui: saved.uiSound, ...saved.sounds };
+        delete saved.uiSound;
+      }
+      delete saved.splash; // заставка теперь всегда: на ней грузятся законы
       Object.assign(this.values, saved);
       this.values.hotkeys = { ...DEFAULTS.hotkeys, ...this.values.hotkeys };
+      this.values.sounds = { ...DEFAULTS.sounds, ...this.values.sounds };
     } catch {
       // первый запуск
     }

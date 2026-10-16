@@ -3,3 +3,5 @@ dist/
 # установщик выкладывается в Releases на GitHub
 *.exe
 *.blockmap
+# память Claude хранится отдельно, не на GitHub
+memory/

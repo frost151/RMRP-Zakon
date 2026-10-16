@@ -1,8 +1,8 @@
 {
   "name": "rmrp-zakon",
-  "productName": "RMRP Zakon",
-  "version": "0.1.0",
-  "description": "Планшет-справочник законодательства РМРП для фракций",
+  "productName": "RMRP Protokol",
+  "version": "0.1.1",
+  "description": "Протокол — планшет-справочник законодательства РМРП для фракций",
   "main": "src/main/index.js",
   "scripts": {
     "start": "electron .",
@@ -25,7 +25,7 @@
   },
   "build": {
     "appId": "ru.rmrp.zakon",
-    "productName": "RMRP Zakon",
+    "productName": "RMRP Protokol",
     "copyright": "© Артем Гольдрин 541-657",
     "directories": {
       "output": "dist",
@@ -45,9 +45,9 @@
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "shortcutName": "РМРП Закон",
-      "uninstallDisplayName": "РМРП Закон",
-      "artifactName": "RMRP-Zakon-Setup-${version}.${ext}",
+      "shortcutName": "Протокол РМРП",
+      "uninstallDisplayName": "Протокол РМРП",
+      "artifactName": "RMRP-Protokol-Setup-${version}.${ext}",
       "installerLanguages": ["ru_RU"],
       "language": "1049"
     }

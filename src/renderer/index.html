@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:">
-  <title>РМРП Закон</title>
+  <title>Протокол</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -35,7 +35,6 @@
         <div class="search">
           <input id="search" type="search" placeholder="Номера через пробел: «63 64 77», «коап 9.3» — Enter добавит в дело. Или слова: «превышение скорости»" autocomplete="off" spellcheck="false">
         </div>
-        <button class="icon-btn" id="uiSound" title="Звуки интерфейса"></button>
         <button class="icon-btn" id="refresh" title="Обновить законы с форума">&#x21BB;</button>
         <button class="icon-btn" id="openSettings" title="Настройки">&#x2699;</button>
       </div>
@@ -59,12 +58,17 @@
           <div class="splash-emblem" id="splashEmblem"></div>
           <div class="splash-logo">
             <span class="splash-small">РМРП</span>
-            <span class="splash-big">Закон<sup>rp</sup></span>
+            <span class="splash-big">Протокол<sup>rp</sup></span>
           </div>
-          <div class="splash-bar"><i></i><i></i><i></i></div>
+          <div class="splash-bar" id="splashBar"><i></i><i></i><i></i></div>
+          <div class="splash-error" id="splashError" hidden>
+            <b>Нет связи с форумом</b>
+            <span id="splashErrorText"></span>
+            <button type="button" id="splashRetry">Повторить</button>
+          </div>
         </div>
         <div class="splash-foot">Правовая база Российской Федерации</div>
-        <div class="splash-skip">Нажмите любую клавишу или кликните, чтобы пропустить</div>
+        <div class="splash-skip" id="splashStatus">Загрузка законов с форума…</div>
       </div>
     </div>
   </div>
@@ -90,16 +94,38 @@
         <input type="checkbox" id="onTop">
       </label>
       <p class="hint">Чтобы планшет было видно поверх GTA, включите в игре режим «Окно без рамки».</p>
+      <h3>Звуки</h3>
       <label class="row">
-        <span>Заставка при запуске</span>
-        <input type="checkbox" id="splashOn">
+        <span>Звук загрузки (мелодия при запуске)</span>
+        <input type="checkbox" data-sound="startup">
       </label>
-      <p class="about">РМРП Закон <span id="appVersion"></span> · разработчик <b>Артем Гольдрин</b> · 541-657</p>
+      <label class="row">
+        <span>Звуки приложения (смена фракции)</span>
+        <input type="checkbox" data-sound="ui">
+      </label>
+      <label class="row" data-tool="timers">
+        <span>Звуки таймера задержания</span>
+        <input type="checkbox" data-sound="timer">
+      </label>
+      <div class="row">
+        <span>Список изменений по версиям</span>
+        <button type="button" class="key-btn" id="openChangelog">Что нового</button>
+      </div>
+      <p class="about">Протокол <span id="appVersion"></span> · разработчик <b>Артем Гольдрин</b> · 541-657</p>
       <div class="actions"><button value="close">Готово</button></div>
     </form>
   </dialog>
 
+  <dialog id="changelog">
+    <form method="dialog">
+      <h2>Что нового</h2>
+      <div class="changelog" id="changelogList"></div>
+      <div class="actions"><button value="close">Закрыть</button></div>
+    </form>
+  </dialog>
+
   <script src="emblems.js"></script>
+  <script src="changelog.js"></script>
   <script src="calc.js"></script>
   <script src="timer-view.js"></script>
   <script src="app.js"></script>

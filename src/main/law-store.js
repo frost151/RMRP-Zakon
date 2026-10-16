@@ -1,35 +1,23 @@
 'use strict';
-// Кэш законов на диске: скачивает с форума только темы, изменившиеся с прошлого раза.
+// Законы с форума: скачиваются целиком при каждом запуске и хранятся только в памяти, на диск не пишутся.
 const fs = require('fs');
 const path = require('path');
 const { fetchThreadList, fetchThread } = require('./forum');
 const { parseLaw } = require('./laws-parser');
 
-// Версия формата: при изменении парсера кэш пересобирается целиком
-const FORMAT = 1;
+// Сколько тем качать одновременно: целиком база грузится за 2–3 секунды
+const PARALLEL = 6;
 
 class LawStore {
   constructor(dir) {
-    this.file = path.join(dir, 'laws.json');
-    this.data = { format: FORMAT, checkedAt: 0, laws: {} };
+    this.data = { checkedAt: 0, laws: {} };
     this.updating = null;
-    try {
-      const saved = JSON.parse(fs.readFileSync(this.file, 'utf8'));
-      if (saved.format === FORMAT) this.data = saved;
-    } catch {
-      // кэша ещё нет — начнём с пустого
-    }
+    // старые версии хранили кэш законов на диске — убираем его
+    for (const f of ['laws.json', 'laws.json.tmp']) fs.rm(path.join(dir, f), { force: true }, () => {});
   }
 
   list() {
     return { checkedAt: this.data.checkedAt, laws: Object.values(this.data.laws) };
-  }
-
-  save() {
-    fs.mkdirSync(path.dirname(this.file), { recursive: true });
-    const tmp = this.file + '.tmp';
-    fs.writeFileSync(tmp, JSON.stringify(this.data));
-    fs.renameSync(tmp, this.file);
   }
 
   // onProgress({ done, total, title })
@@ -42,25 +30,20 @@ class LawStore {
 
   async _update(onProgress) {
     const threads = await fetchThreadList();
-    const stale = threads.filter((t) => {
-      const cached = this.data.laws[t.id];
-      return !cached || !t.lastTime || cached.lastTime < t.lastTime;
-    });
+    const laws = {};
     let done = 0;
-    onProgress({ done, total: stale.length });
-    for (const t of stale) {
-      onProgress({ done, total: stale.length, title: t.title });
-      this.data.laws[t.id] = parseLaw(t, await fetchThread(t.url));
-      done++;
-    }
-    const alive = new Set(threads.map((t) => t.id));
-    for (const id of Object.keys(this.data.laws)) {
-      if (!alive.has(id)) delete this.data.laws[id];
-    }
-    this.data.checkedAt = Date.now();
-    this.save();
-    onProgress({ done, total: stale.length });
-    return { changed: stale.length, ...this.list() };
+    let next = 0;
+    onProgress({ done, total: threads.length });
+    const worker = async () => {
+      while (next < threads.length) {
+        const t = threads[next++];
+        laws[t.id] = parseLaw(t, await fetchThread(t.url));
+        onProgress({ done: ++done, total: threads.length, title: t.title });
+      }
+    };
+    await Promise.all(Array.from({ length: PARALLEL }, worker));
+    this.data = { checkedAt: Date.now(), laws };
+    return { changed: threads.length, ...this.list() };
   }
 }
 

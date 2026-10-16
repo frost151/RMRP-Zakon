@@ -339,7 +339,15 @@ dialog {
   box-shadow: 0 20px 50px rgba(0, 0, 0, .6);
 }
 dialog::backdrop { background: rgba(0, 0, 0, .45); }
+#changelog { width: min(560px, 86vw); }
+.changelog { max-height: 60vh; overflow-y: auto; overflow-x: hidden; padding-right: 6px; outline: none; }
+.changelog section + section { margin-top: 14px; }
+.changelog h3 { margin: 0 0 6px; color: var(--accent); }
+.changelog h3 span { color: var(--muted); font-weight: 400; text-transform: none; letter-spacing: 0; margin-left: 6px; }
+.changelog ul { margin: 0; padding-left: 18px; font-size: 13px; line-height: 1.45; }
+.changelog li + li { margin-top: 4px; }
 dialog h2 { margin: 0 0 14px; font-size: 17px; }
+dialog h3 { margin: 18px 0 2px; font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
 .row { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 10px; }
 .hint { margin: 4px 0 0; font-size: 12px; color: var(--muted); }
 .hint.err { color: var(--warn); }
@@ -600,6 +608,12 @@ kbd {
   animation: splash-in .7s ease-out .6s both, splash-pulse 1.6s ease-in-out 1.3s infinite;
 }
 @keyframes splash-pulse { 50% { opacity: .45; } }
+.splash-bar[hidden], .splash-error[hidden], .splash-skip[hidden] { display: none; }
+.splash-error { display: flex; flex-direction: column; align-items: center; gap: 8px; max-width: 420px; text-align: center; color: #ddd; font-size: 13px; }
+.splash-error b { font-size: 16px; color: #ff8a7a; }
+.splash-error span { color: #9a9a9a; font-size: 12px; }
+.splash-error button { margin-top: 6px; padding: 7px 22px; border: 1px solid #3a6fd8; border-radius: 6px; background: #2c5bd0; color: #fff; font: inherit; cursor: pointer; }
+.splash-error button:hover { background: #3a6fe0; }
 
 @media (max-width: 1250px) {
   .faction .name { display: none; }

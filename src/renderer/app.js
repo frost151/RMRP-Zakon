@@ -639,6 +639,7 @@ const SOUNDS = {
 
 let audio = null;
 function playSound(kind) {
+  if (!state.settings.sounds.timer) return;
   const s = SOUNDS[kind] || SOUNDS.alert;
   try {
     audio = audio || new AudioContext();
@@ -660,7 +661,7 @@ function playSound(kind) {
   } catch { /* без звука */ }
 }
 
-// --- Звуки интерфейса: мелодия включения и смена фракции (выключаются кнопкой в шапке) ---
+// --- Звуки интерфейса: мелодия включения и смена фракции (выключаются в настройках) ---
 
 // Нота с плавной атакой и затуханием. bell — добавляет октаву сверху, как у колокольчика
 function tone(out, t, freq, dur, { wave = 'sine', gain = 0.15, attack = 0.01, bell = false } = {}) {
@@ -695,7 +696,7 @@ function echoBus() {
 const NOTE = { G3: 196, C4: 261.63, D4: 293.66, E4: 329.63, G4: 392, B4: 493.88, C5: 523.25, D5: 587.33, G5: 783.99, B5: 987.77, C6: 1046.5, D6: 1174.66 };
 
 function playUiSound(kind, arg) {
-  if (!state.settings.uiSound) return;
+  if (!state.settings.sounds[kind === 'startup' ? 'startup' : 'ui']) return;
   try {
     audio = audio || new AudioContext();
     if (audio.state === 'suspended') audio.resume();
@@ -718,35 +719,31 @@ function playUiSound(kind, arg) {
   } catch { /* без звука */ }
 }
 
-function renderUiSoundBtn() {
-  const on = state.settings.uiSound;
-  const wave = on
-    ? '<path d="M16 9a4 4 0 0 1 0 6M18.5 6.5a7.5 7.5 0 0 1 0 11" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>'
-    : '<path d="M16 9l5 6M21 9l-5 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>';
-  $('uiSound').innerHTML = `<svg viewBox="0 0 24 24" width="18" height="18"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/>${wave}</svg>`;
-  $('uiSound').title = on ? 'Звуки интерфейса включены (звуки таймера работают всегда)' : 'Звуки интерфейса выключены (звуки таймера работают всегда)';
-  $('uiSound').classList.toggle('off', !on);
-}
-
 // --- Заставка ---
 
-function runSplash() {
+// Законы на диске не хранятся: заставка держит планшет, пока база полностью не загрузится с форума
+async function runSplash() {
   const el = $('splash');
-  if (!state.settings.splash) { el.hidden = true; return; }
   $('splashEmblem').innerHTML = window.emblem(state.settings.faction);
-  let done = false;
-  const finish = () => {
-    if (done) return;
-    done = true;
-    clearTimeout(timer);
-    playUiSound('startup');
-    el.classList.add('out');
-    setTimeout(() => { el.hidden = true; }, 900);
-    document.removeEventListener('keydown', finish, true);
-  };
-  const timer = setTimeout(finish, 3200);
-  el.addEventListener('click', finish);
-  document.addEventListener('keydown', finish, true);
+  const minShow = new Promise((r) => setTimeout(r, 2000));
+  for (;;) {
+    $('splashBar').hidden = false;
+    $('splashError').hidden = true;
+    $('splashStatus').hidden = false;
+    $('splashStatus').textContent = 'Загрузка законов с форума…';
+    const res = await window.api.updateLaws();
+    if (!res.error) { applyLaws(res); break; }
+    $('splashBar').hidden = true;
+    $('splashStatus').hidden = true;
+    $('splashErrorText').textContent = 'Законы загружаются с forum.rmrp.ru при каждом запуске. Проверьте интернет и нажмите «Повторить».';
+    $('splashError').title = res.error;
+    $('splashError').hidden = false;
+    await new Promise((r) => $('splashRetry').addEventListener('click', r, { once: true }));
+  }
+  await minShow;
+  playUiSound('startup');
+  el.classList.add('out');
+  setTimeout(() => { el.hidden = true; }, 900);
 }
 
 function toast(text) {
@@ -771,29 +768,32 @@ function showChecked() {
   setSync(`база: ${today ? d.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }) : d.toLocaleDateString('ru-RU')}`);
 }
 
+function applyLaws(res) {
+  state.checkedAt = res.checkedAt;
+  setLaws(res.laws);
+  renderAll();
+  showChecked();
+}
+
+// Кнопка ↻: заново скачать базу, не закрывая планшет (при ошибке остаются законы, загруженные при запуске)
 async function refresh() {
   $('refresh').classList.add('spin');
   setSync('связь с форумом…', 'busy');
   const res = await window.api.updateLaws();
   $('refresh').classList.remove('spin');
   if (res.error) {
-    setSync(state.laws.length ? 'офлайн · локальная база' : 'нет связи с форумом', 'err');
+    setSync('нет связи · база с запуска', 'err');
     $('sync').title = res.error;
-    if (!state.laws.length) {
-      $('viewer').innerHTML = `<div class="empty"><h2>Не удалось загрузить законы</h2>${esc(res.error)}<br><br>Проверьте интернет и нажмите ↻.</div>`;
-    }
     return;
   }
-  state.checkedAt = res.checkedAt;
-  if (res.changed || res.laws.length !== state.laws.length) {
-    setLaws(res.laws);
-    renderAll();
-  }
-  showChecked();
+  applyLaws(res);
 }
 
 window.api.onProgress((p) => {
-  if (p.total && p.done < p.total) setSync(`обновление ${p.done + 1}/${p.total}`, 'busy');
+  if (!p.total || p.done >= p.total) return;
+  const text = `загрузка ${p.done}/${p.total}`;
+  setSync(text, 'busy');
+  $('splashStatus').textContent = `Загрузка законов с форума: ${p.done} из ${p.total}`;
 });
 
 // --- Настройки ---
@@ -828,7 +828,7 @@ function setupSettings() {
   $('openSettings').addEventListener('click', () => {
     fill();
     $('onTop').checked = state.settings.alwaysOnTop;
-    $('splashOn').checked = state.settings.splash;
+    for (const c of dlg.querySelectorAll('[data-sound]')) c.checked = state.settings.sounds[c.dataset.sound];
     resetHint();
     dlg.showModal();
   });
@@ -869,12 +869,23 @@ function setupSettings() {
       renderDetention();
     }
   });
+  $('openChangelog').addEventListener('click', () => {
+    $('changelogList').innerHTML = window.CHANGELOG.map((v) => `
+      <section>
+        <h3>v${esc(v.version)}${v.version === state.version ? ' · текущая' : ''} <span>${esc(v.date)}</span></h3>
+        <ul>${v.items.map((t) => `<li>${esc(t)}</li>`).join('')}</ul>
+      </section>`).join('');
+    $('changelog').showModal();
+  });
   $('onTop').addEventListener('change', async (e) => {
     state.settings = (await window.api.setSettings({ alwaysOnTop: e.target.checked })).settings;
   });
-  $('splashOn').addEventListener('change', async (e) => {
-    state.settings = (await window.api.setSettings({ splash: e.target.checked })).settings;
-  });
+  for (const c of dlg.querySelectorAll('[data-sound]')) {
+    c.addEventListener('change', async () => {
+      const sounds = { ...state.settings.sounds, [c.dataset.sound]: c.checked };
+      state.settings = (await window.api.setSettings({ sounds })).settings;
+    });
+  }
 }
 
 // --- События ---
@@ -1019,10 +1030,6 @@ function setupEvents() {
     document.getElementById('addAll')?.click();
   });
   $('refresh').addEventListener('click', refresh);
-  $('uiSound').addEventListener('click', async () => {
-    state.settings = (await window.api.setSettings({ uiSound: !state.settings.uiSound })).settings;
-    renderUiSoundBtn();
-  });
   for (const b of document.querySelectorAll('[data-win]')) {
     b.addEventListener('click', () => window.api.win(b.dataset.win));
   }
@@ -1066,6 +1073,7 @@ function tickClock() {
   state.settings = init.settings;
   state.det = init.detention;
   state.checkedAt = init.checkedAt;
+  state.version = init.version;
   $('appVersion').textContent = init.version ? `v${init.version}` : '';
   $('bezelVersion').textContent = init.version ? `v${init.version}` : '';
   state.picks = store.get('picks', []);
@@ -1076,15 +1084,12 @@ function tickClock() {
   renderFactions();
   applyFaction();
   runSplash();
-  renderUiSoundBtn();
   setupEvents();
   setupSettings();
   renderAll();
   setTab(state.tab);
   setPanelCollapsed(store.get('panelCollapsed', false));
-  showChecked();
   tickClock();
   setInterval(tickClock, 10000);
   setInterval(tickDetention, 250);
-  refresh();
 })();

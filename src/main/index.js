@@ -43,7 +43,7 @@ function createWindow() {
     transparent: true,
     backgroundColor: '#00000000',
     show: false,
-    title: 'РМРП Закон',
+    title: 'Протокол',
     webPreferences,
   });
   applyAlwaysOnTop();
