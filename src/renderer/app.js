@@ -814,7 +814,90 @@ async function runSplash() {
   playUiSound('startup');
   el.classList.add('out');
   setTimeout(() => { el.hidden = true; }, 900);
+  checkUpdate();
 }
+
+// --- Обновление программы ---
+
+let updError = '';
+
+// Под кнопками: ошибка скачивания или предупреждение о задержании
+function renderUpdWarn() {
+  const busy = state.det && state.det.running;
+  const text = updError || (busy ? 'Идёт задержание — обновление его сбросит. Обновитесь после окончания.' : '');
+  $('updWarn').hidden = !text;
+  $('updWarn').textContent = text;
+  $('updGo').disabled = busy || !$('updBar').hidden;
+}
+
+// При запуске: нашлось обновление → окно один раз, а в шапке остаётся зелёная кнопка-напоминание
+async function checkUpdate() {
+  const upd = await window.api.checkUpdate();
+  if (!upd) return;
+  state.update = upd;
+  const btn = $('appUpdate');
+  btn.title = `Доступна версия ${upd.version} — нажмите, чтобы обновиться`;
+  btn.hidden = false;
+  btn.classList.add('pulse'); // несколько мягких вспышек, дальше ровный зелёный
+  btn.addEventListener('animationend', () => btn.classList.remove('pulse'), { once: true });
+  showUpdate();
+}
+
+function showUpdate() {
+  const upd = state.update;
+  const dlg = $('update');
+  if (!upd || dlg.open) return;
+  // идёт скачивание — просто вернуть окно с прогрессом
+  if (state.updDownloading) { dlg.showModal(); return; }
+  $('updVersion').textContent = `v${upd.version}`;
+  $('updCurrent').textContent = `v${state.version}`;
+  $('updNotes').textContent = upd.notes || 'Описание изменений — в окне «Что нового» после обновления.';
+  $('updBar').hidden = true;
+  updError = '';
+  renderUpdWarn();
+  const timer = setInterval(renderUpdWarn, 1000);
+  dlg.addEventListener('close', () => clearInterval(timer), { once: true });
+  // пока качается, окно не закрывается по Esc
+  dlg.oncancel = (e) => { if (state.updDownloading) e.preventDefault(); };
+  $('updLater').onclick = () => dlg.close();
+  $('updGo').onclick = async () => {
+    if (state.det && state.det.running) return;
+    updError = '';
+    state.updDownloading = true;
+    $('updBar').hidden = false;
+    $('updGo').disabled = true;
+    $('updLater').disabled = true;
+    setUpdProgress(0);
+    const res = await window.api.downloadUpdate();
+    if (res && res.error) updFailed(res.error);
+  };
+  dlg.showModal();
+  if (!$('updGo').disabled) $('updGo').focus();
+}
+
+function setUpdProgress(p) {
+  $('updBarFill').style.width = `${p}%`;
+  $('updBarText').textContent = p >= 100 ? 'Проверка файла…' : `Скачивание ${p}%`;
+}
+
+function updFailed(msg) {
+  state.updDownloading = false;
+  $('updBar').hidden = true;
+  $('updLater').disabled = false;
+  updError = 'Не удалось скачать обновление. Проверьте интернет и попробуйте ещё раз.';
+  $('updWarn').title = msg;
+  renderUpdWarn();
+}
+
+window.api.onUpdate((kind, arg) => {
+  if (kind === 'progress') setUpdProgress(arg);
+  if (kind === 'ready') {
+    setUpdProgress(100);
+    $('updBarText').textContent = 'Установка… программа перезапустится';
+    setTimeout(() => window.api.installUpdate(), 800);
+  }
+  if (kind === 'error' && !$('updBar').hidden) updFailed(arg);
+});
 
 function toast(text) {
   const el = document.createElement('div');
@@ -1118,11 +1201,12 @@ function setupEvents() {
     document.getElementById('addAll')?.click();
   });
   $('refresh').addEventListener('click', refresh);
+  $('appUpdate').addEventListener('click', showUpdate);
   for (const b of document.querySelectorAll('[data-win]')) {
     b.addEventListener('click', () => window.api.win(b.dataset.win));
   }
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && !$('settings').open) {
+    if (e.key === 'Escape' && !$('settings').open && !$('update').open) {
       if (state.query) {
         $('search').value = '';
         state.query = '';

@@ -6,6 +6,7 @@ const { LawStore } = require('./law-store');
 const { Settings } = require('./settings');
 const { Detention } = require('./detention');
 const { FACTIONS } = require('./laws-meta');
+const { setupUpdater } = require('./updater');
 
 let win = null;
 let mini = null;
@@ -213,6 +214,7 @@ app.whenReady().then(() => {
   );
   createWindow();
   createMini();
+  setupUpdater((channel, payload) => win && win.webContents.send(channel, payload));
   const errors = registerHotkeys(settings.get().hotkeys);
   for (const [name, err] of Object.entries(errors)) console.warn(`Горячая клавиша ${name}: ${err}`);
 });

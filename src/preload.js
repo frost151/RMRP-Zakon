@@ -13,4 +13,12 @@ contextBridge.exposeInMainWorld('api', {
   onDetAlert: (fn) => ipcRenderer.on('det:alert', (_, a) => fn(a)),
   copy: (text) => ipcRenderer.send('clipboard', text),
   win: (action) => ipcRenderer.send('win', action),
+  checkUpdate: () => ipcRenderer.invoke('update:check'),
+  downloadUpdate: () => ipcRenderer.invoke('update:download'),
+  installUpdate: () => ipcRenderer.send('update:install'),
+  onUpdate: (fn) => {
+    ipcRenderer.on('update:progress', (_, p) => fn('progress', p));
+    ipcRenderer.on('update:ready', () => fn('ready'));
+    ipcRenderer.on('update:error', (_, e) => fn('error', e));
+  },
 });

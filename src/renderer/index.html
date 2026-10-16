@@ -35,6 +35,7 @@
         <div class="search">
           <input id="search" type="search" placeholder="Номера через пробел: «63 64 77», «коап 9.3» — Enter добавит в дело. Или слова: «превышение скорости»" autocomplete="off" spellcheck="false">
         </div>
+        <button class="icon-btn upd-btn" id="appUpdate" hidden title="Доступно обновление программы"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7 10.5l5 5 5-5M5 19.5h14"/></svg></button>
         <button class="icon-btn" id="refresh" title="Обновить законы с форума">&#x21BB;</button>
         <button class="icon-btn" id="openSettings" title="Настройки">&#x2699;</button>
       </div>
@@ -114,6 +115,20 @@
       </div>
       <p class="about">Протокол <span id="appVersion"></span> · разработчик <b>Артем Гольдрин</b> · 541-657</p>
       <div class="actions"><button value="close">Готово</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="update">
+    <form method="dialog">
+      <h2>Доступна новая версия <span id="updVersion"></span></h2>
+      <p class="hint">У вас <span id="updCurrent"></span>. Обновление скачается и установится само, программа перезапустится.</p>
+      <div class="changelog upd-notes" id="updNotes"></div>
+      <div class="upd-bar" id="updBar" hidden><i id="updBarFill"></i><span id="updBarText"></span></div>
+      <p class="hint err" id="updWarn" hidden></p>
+      <div class="actions">
+        <button type="button" class="ghost" id="updLater">Позже</button>
+        <button type="button" id="updGo">Обновить</button>
+      </div>
     </form>
   </dialog>
 

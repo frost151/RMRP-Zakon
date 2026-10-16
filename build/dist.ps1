@@ -14,6 +14,7 @@ if (-not (Test-Path "$cache\winCodeSign-2.6.0\rcedit-x64.exe")) {
 }
 
 Set-Location "$PSScriptRoot\.."
-npx electron-builder --win nsis
+# --publish never: выпуск на GitHub создаётся вручную (gh release create … установщик + dist/latest.yml для автообновления)
+npx electron-builder --win nsis --publish never
 # готовый установщик кладём в корень проекта, чтобы он лежал на виду
 if ($?) { Move-Item -Force dist\*-Setup-*.exe . }
