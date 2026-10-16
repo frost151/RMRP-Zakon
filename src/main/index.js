@@ -21,6 +21,10 @@ if (!app.requestSingleInstanceLock()) app.quit();
 app.on('second-instance', () => showWindow());
 
 const RENDERER = path.join(__dirname, '..', 'renderer');
+// значок окна на панели задач (без него в окне виден стандартный значок Electron)
+const ICON = path.join(__dirname, '..', 'assets', 'icon.png');
+// тот же идентификатор, что у ярлыка установщика (appId) — панель задач связывает окно со значком программы
+app.setAppUserModelId('ru.rmrp.zakon');
 const webPreferences = {
   preload: path.join(__dirname, '..', 'preload.js'),
   contextIsolation: true,
@@ -34,6 +38,7 @@ const webPreferences = {
 function createWindow() {
   const b = settings.get().bounds;
   win = new BrowserWindow({
+    icon: ICON,
     width: b ? b.width : 1340,
     height: b ? b.height : 820,
     x: b ? b.x : undefined,
@@ -66,6 +71,7 @@ function createMini() {
   const area = screen.getPrimaryDisplay().workArea;
   const pos = settings.get().miniPos || { x: area.x + area.width - 300, y: area.y + 40 };
   mini = new BrowserWindow({
+    icon: ICON,
     width: 280,
     height: 92,
     x: pos.x,
