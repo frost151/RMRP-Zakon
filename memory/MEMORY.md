@@ -1,0 +1,6 @@
+﻿- [Где проект](project-location.md) — C:\Users\SommuS\Desktop\RMRP-Zakon; старая папка в профиле — неактуальная копия
+- [Цель проекта](project-goal.md) — приложение-справочник законов РМРП для фракций; работать через наводящие вопросы
+- [Решения и состояние](project-decisions.md) — все функции планшета; 60 мин, установщик в корне актуален (16.10 16:03)
+- [Стиль работы](feedback-working-style.md) — русский, наводящие вопросы, проверять в живом приложении, не ломать данные пользователя
+- [Electron на этой машине](electron-env-quirks.md) — зеркало npmmirror, снять ELECTRON_RUN_AS_NODE, сборка через build\dist.ps1
+- [GitHub](github-repo.md) — приватный frost151/RMRP-Zakon, установщик в Releases, gh залогинен
