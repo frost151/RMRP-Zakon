@@ -7,12 +7,14 @@ const { Settings } = require('./settings');
 const { Detention } = require('./detention');
 const { FACTIONS } = require('./laws-meta');
 const { setupUpdater } = require('./updater');
+const { setupPresence } = require('./presence');
 
 let win = null;
 let mini = null;
 let store = null;
 let settings = null;
 let detention = null;
+let presence = null;
 
 // Папка данных не зависит от названия программы: кэш законов и настройки сохраняются между версиями
 app.setPath('userData', path.join(app.getPath('appData'), 'rmrp-zakon'));
@@ -175,6 +177,7 @@ ipcMain.handle('settings:set', (_, patch) => {
   }
   const saved = settings.set(patch);
   if ('alwaysOnTop' in patch) applyAlwaysOnTop();
+  if ('faction' in patch) presence.ping();
   return { settings: saved };
 });
 
@@ -207,7 +210,8 @@ ipcMain.on('win', (_, action) => {
   if (action === 'minimize') win.minimize();
   if (action === 'hide') win.hide();
   if (action === 'show') showWindow();
-  if (action === 'close') app.quit();
+  // перед выходом снимаем отметку онлайна (не дольше 1,5 с)
+  if (action === 'close') { win.hide(); presence.bye().finally(() => app.quit()); }
 });
 
 app.whenReady().then(() => {
@@ -220,6 +224,7 @@ app.whenReady().then(() => {
   );
   createWindow();
   createMini();
+  presence = setupPresence(settings, app.getVersion());
   setupUpdater((channel, payload) => win && win.webContents.send(channel, payload));
   const errors = registerHotkeys(settings.get().hotkeys);
   for (const [name, err] of Object.entries(errors)) console.warn(`Горячая клавиша ${name}: ${err}`);
