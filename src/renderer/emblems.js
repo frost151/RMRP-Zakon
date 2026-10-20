@@ -43,15 +43,6 @@
     </g>`;
 
   const SYMBOLS = {
-    // Здание суда — общая правовая база
-    all: `
-      <g fill="currentColor">
-        <path d="M54 96 L100 64 L146 96 Z"/>
-        <rect x="58" y="100" width="84" height="8" rx="2"/>
-        <rect x="64" y="112" width="10" height="46"/><rect x="85" y="112" width="10" height="46"/>
-        <rect x="106" y="112" width="10" height="46"/><rect x="127" y="112" width="10" height="46"/>
-        <rect x="54" y="162" width="92" height="9" rx="2"/>
-      </g>`,
     // Руль и дорога
     gibdd: `
       <g fill="none" stroke="currentColor" stroke-width="8">
@@ -78,7 +69,7 @@
   };
 
   function emblem(key, opts = {}) {
-    const sym = SYMBOLS[key] || SYMBOLS.all;
+    const sym = SYMBOLS[key] || SYMBOLS.uvd;
     const small = opts.small;
     return `<svg viewBox="0 0 200 240" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
       <path d="${SHIELD_OUT}" fill="none" stroke="currentColor" stroke-width="${small ? 12 : 6}"/>

@@ -4,7 +4,7 @@ const fs = require('fs');
 const path = require('path');
 
 const DEFAULTS = {
-  faction: 'all',
+  faction: 'uvd',
   // toggle — показать/скрыть планшет, timer — старт/пауза задержания, lawyer — шаг ожидания адвоката
   hotkeys: { toggle: 'F9', timer: 'F10', lawyer: 'F11' },
   alwaysOnTop: true,
@@ -30,6 +30,8 @@ class Settings {
         saved.sounds = { ...DEFAULTS.sounds, startup: saved.uiSound, ui: saved.uiSound, ...saved.sounds };
         delete saved.uiSound;
       }
+      // вкладку «Все» (правовая база РФ) убрали — открываем УВД
+      if (saved.faction === 'all') saved.faction = 'uvd';
       delete saved.splash; // заставка теперь всегда: на ней грузятся законы
       Object.assign(this.values, saved);
       this.values.hotkeys = { ...DEFAULTS.hotkeys, ...this.values.hotkeys };

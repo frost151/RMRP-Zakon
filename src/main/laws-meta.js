@@ -37,13 +37,6 @@ const CALC_DOCS = ['uk', 'koap'];
 
 // Фракции: какие законы показывать первыми, какие инструменты включены, оформление планшета
 const FACTIONS = {
-  all: {
-    name: 'Все',
-    org: 'Правовая база Российской Федерации',
-    color: '#8fa3bb',
-    docs: ['konst', 'uk', 'koap', 'pk', 'upk', 'pdd'],
-    tools: ['calc', 'timers', 'bail'],
-  },
   gibdd: {
     name: 'ГИБДД',
     org: 'Госавтоинспекция МВД России',

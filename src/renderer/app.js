@@ -40,7 +40,7 @@ const store = {
 // --- Фракции ---
 
 function faction() {
-  return state.factions[state.settings.faction] || state.factions.all;
+  return state.factions[state.settings.faction] || state.factions.uvd;
 }
 
 function renderFactions() {
@@ -113,7 +113,7 @@ function renderLaws() {
   const cur = state.query ? null : currentLaw();
   const item = (l) => lawItem(l, cur && l.id === cur.id);
   $('laws').innerHTML = `
-    <h4>${esc(faction().name === 'Все' ? 'Основные' : `Для: ${faction().name}`)}</h4>
+    <h4>Для: ${esc(faction().name)}</h4>
     ${main.map(item).join('') || '<p class="hint">Нет загруженных законов</p>'}
     ${rest.length ? `<h4>Прочее законодательство</h4>${rest.map(item).join('')}` : ''}`;
 }
@@ -1253,7 +1253,7 @@ function tickClock() {
   state.bail = { president: false, banned: false, term: null, ...store.get('bail', {}) };
   state.tab = store.get('tab', 'case');
   setLaws(init.laws);
-  if (!state.factions[state.settings.faction]) state.settings.faction = 'all';
+  if (!state.factions[state.settings.faction]) state.settings.faction = 'uvd';
   renderFactions();
   applyFaction();
   runSplash();

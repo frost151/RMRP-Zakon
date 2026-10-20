@@ -125,7 +125,7 @@ function toggleWindow() {
 
 // Таймер задержания есть только у фракций с инструментом timers (у адвоката его нет)
 function hasTimers() {
-  const f = FACTIONS[settings.get().faction] || FACTIONS.all;
+  const f = FACTIONS[settings.get().faction] || FACTIONS.uvd;
   return f.tools.includes('timers');
 }
 
