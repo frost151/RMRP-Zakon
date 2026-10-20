@@ -101,10 +101,8 @@ function currentLaw() {
 const WEEK = 7 * 24 * 3600;
 function lawItem(l, active) {
   const fresh = l.lastTime && Date.now() / 1000 - l.lastTime < WEEK;
-  const sub = l.short === l.title ? '' : l.title;
   return `<button class="law-item${active ? ' active' : ''}" data-law="${esc(l.id)}" title="${esc(l.title)}">
     <span class="t">${esc(l.short)}${fresh ? '<span class="new">ОБН</span>' : ''}</span>
-    ${sub ? `<span class="s">${esc(sub)}</span>` : ''}
   </button>`;
 }
 
@@ -432,6 +430,10 @@ function caseText() {
 function renderCase() {
   const count = state.picks.length;
   $('caseCount').textContent = count ? String(count) : '';
+  // пустое дело — панель уходит в полосу, первая статья — разворачивает
+  const was = state.caseCount;
+  state.caseCount = count;
+  if (was !== undefined && Boolean(was) !== Boolean(count) && state.tab === 'case') setPanelCollapsed(!count, false);
   if (state.tab === 'bail') return renderBail();
   if (state.tab !== 'case') return;
   if (!count) {
@@ -1043,9 +1045,9 @@ function setupSettings() {
 
 // --- События ---
 
-function setPanelCollapsed(collapsed) {
+function setPanelCollapsed(collapsed, remember = true) {
   state.panelCollapsed = collapsed;
-  store.set('panelCollapsed', collapsed);
+  if (remember) store.set('panelCollapsed', collapsed);
   $('panel').classList.toggle('collapsed', collapsed);
   $('panelToggle').innerHTML = collapsed ? '&#x00AB;' : '&#x00BB;';
   $('panelToggle').title = collapsed ? 'Развернуть дело и задержание' : 'Свернуть вправо';
@@ -1262,6 +1264,7 @@ function tickClock() {
   renderAll();
   setTab(state.tab);
   setPanelCollapsed(store.get('panelCollapsed', false));
+  if (!state.picks.length && state.tab === 'case') setPanelCollapsed(true, false);
   tickClock();
   setInterval(tickClock, 10000);
   setInterval(tickDetention, 250);
