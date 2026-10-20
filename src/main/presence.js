@@ -3,8 +3,8 @@
 // выбранная фракция и версия — без данных игрока. Ошибки сети молча пропускаем.
 const crypto = require('crypto');
 
-// адрес воркера Cloudflare; пусто — счётчик выключен (для проверки можно задать PROTOKOL_ONLINE_URL)
-const URL_BASE = process.env.PROTOKOL_ONLINE_URL || '';
+// адрес воркера Cloudflare (server/); для проверки на локальном сервере — PROTOKOL_ONLINE_URL
+const URL_BASE = process.env.PROTOKOL_ONLINE_URL || 'https://protokol-online.protokol-online.workers.dev';
 const EVERY = 3 * 60 * 1000;
 
 function setupPresence(settings, version) {
