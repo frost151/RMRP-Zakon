@@ -6,6 +6,7 @@ contextBridge.exposeInMainWorld('api', {
   init: () => ipcRenderer.invoke('init'),
   setSettings: (patch) => ipcRenderer.invoke('settings:set', patch),
   updateLaws: () => ipcRenderer.invoke('laws:update'),
+  online: () => ipcRenderer.invoke('online'),
   onProgress: (fn) => ipcRenderer.on('laws:progress', (_, p) => fn(p)),
   onFocusSearch: (fn) => ipcRenderer.on('focus-search', () => fn()),
   det: (action, arg) => ipcRenderer.send('det', action, arg),

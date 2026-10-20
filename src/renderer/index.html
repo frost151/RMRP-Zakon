@@ -21,6 +21,7 @@
         </div>
         <div class="sb-clock" id="clock">--:--</div>
         <div class="sb-right">
+          <span class="sb-online" id="online" hidden title="Сейчас в программе (видно только с ключом разработчика)"></span>
           <span class="sb-sync" id="sync" title="Синхронизация с форумом">—</span>
           <span class="sb-signal" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
           <span class="sb-battery" aria-hidden="true"><i></i></span>
@@ -113,6 +114,10 @@
         <span>Список изменений по версиям</span>
         <button type="button" class="key-btn" id="openChangelog">Что нового</button>
       </div>
+      <label class="row" id="adminRow" hidden>
+        <span>Ключ разработчика (онлайн в шапке)</span>
+        <input type="password" id="adminKey" class="key-input" autocomplete="off" spellcheck="false">
+      </label>
       <p class="about">Протокол <span id="appVersion"></span> · разработчик <b>Артем Гольдрин</b> · 541-657</p>
       <div class="actions"><button value="close">Готово</button></div>
     </form>

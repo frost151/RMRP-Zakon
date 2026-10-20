@@ -1036,7 +1036,19 @@ function setupSettings() {
     $('onTop').checked = state.settings.alwaysOnTop;
     for (const c of dlg.querySelectorAll('[data-sound]')) c.checked = state.settings.sounds[c.dataset.sound];
     resetHint();
+    $('adminKey').value = state.settings.adminKey || '';
+    $('adminRow').hidden = !state.settings.adminKey;
     dlg.showModal();
+  });
+  // поле ключа разработчика открывается пятью кликами по строке «Протокол … разработчик»
+  let aboutClicks = 0;
+  dlg.querySelector('.about').addEventListener('click', () => {
+    if (++aboutClicks >= 5) { $('adminRow').hidden = false; aboutClicks = 0; }
+  });
+  $('adminKey').addEventListener('change', async (e) => {
+    const r = await window.api.setSettings({ adminKey: e.target.value.trim() });
+    state.settings = r.settings;
+    tickOnline();
   });
   dlg.addEventListener('click', (e) => {
     const b = e.target.closest('[data-hotkey]');
@@ -1308,6 +1320,16 @@ function setupEvents() {
   });
 }
 
+// Онлайн в шапке — только если введён ключ разработчика
+async function tickOnline() {
+  const el = $('online');
+  if (!state.settings.adminKey) { el.hidden = true; return; }
+  const res = await window.api.online();
+  el.hidden = false;
+  el.className = `sb-online${res && res.error ? ' err' : ''}`;
+  el.textContent = !res ? '● —' : res.error ? `● ${res.error}` : `● ${res.online} онлайн`;
+}
+
 function tickClock() {
   $('clock').textContent = new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
 }
@@ -1340,5 +1362,7 @@ function tickClock() {
   if (!state.picks.length && state.tab === 'case') setPanelCollapsed(true, false);
   tickClock();
   setInterval(tickClock, 10000);
+  tickOnline();
+  setInterval(tickOnline, 60000);
   setInterval(tickDetention, 250);
 })();

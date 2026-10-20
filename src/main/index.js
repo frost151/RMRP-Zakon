@@ -181,6 +181,8 @@ ipcMain.handle('settings:set', (_, patch) => {
   return { settings: saved };
 });
 
+ipcMain.handle('online', () => presence.online(settings.get().adminKey));
+
 ipcMain.handle('laws:update', async () => {
   try {
     return await store.update((p) => win && win.webContents.send('laws:progress', p));

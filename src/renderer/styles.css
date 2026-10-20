@@ -134,6 +134,11 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .sb-org { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-family: "Segoe UI", system-ui, sans-serif; }
 .sb-clock { color: var(--text); letter-spacing: .08em; }
 .sb-sync { white-space: nowrap; }
+.sb-online { white-space: nowrap; color: var(--ok); }
+.sb-online[hidden] { display: none; }
+.sb-online.err { color: var(--warn); }
+.key-input { width: 150px; padding: 5px 8px; border-radius: 8px; border: 1px solid var(--line); background: rgba(0, 0, 0, .35); color: var(--text); font: 12px var(--mono); outline: none; user-select: text; }
+.key-input:focus { border-color: var(--accent); }
 .sb-sync.busy { color: var(--accent); }
 .sb-sync.err { color: var(--warn); }
 

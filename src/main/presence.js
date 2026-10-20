@@ -8,7 +8,7 @@ const URL_BASE = process.env.PROTOKOL_ONLINE_URL || 'https://protokol-online.pro
 const EVERY = 3 * 60 * 1000;
 
 function setupPresence(settings, version) {
-  if (!URL_BASE) return { ping() {}, bye: async () => {} };
+  if (!URL_BASE) return { ping() {}, bye: async () => {}, online: async () => null };
   let { clientId } = settings.get();
   if (!clientId) {
     clientId = crypto.randomBytes(16).toString('hex');
@@ -24,7 +24,19 @@ function setupPresence(settings, version) {
   const ping = () => send('/ping', { faction: settings.get().faction, version }, 10000);
   ping();
   setInterval(ping, EVERY).unref();
-  return { ping, bye: () => send('/bye', {}, 1500) };
+  // онлайн для разработчика: сервер отдаёт статистику только по ключу ADMIN_KEY
+  const online = async (key) => {
+    if (!key) return null;
+    try {
+      const res = await fetch(`${URL_BASE}/stats?json&key=${encodeURIComponent(key)}`, { signal: AbortSignal.timeout(10000) });
+      if (res.status === 403) return { error: 'Неверный ключ' };
+      if (!res.ok) return null;
+      return { online: (await res.json()).online };
+    } catch {
+      return null;
+    }
+  };
+  return { ping, bye: () => send('/bye', {}, 1500), online };
 }
 
 module.exports = { setupPresence };

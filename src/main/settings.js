@@ -10,6 +10,8 @@ const DEFAULTS = {
   alwaysOnTop: true,
   // звуки: мелодия заставки, звуки интерфейса (смена фракции), сигналы таймера задержания
   sounds: { startup: true, ui: true, timer: true },
+  // ключ разработчика: показывает онлайн в шапке (вводится в скрытом поле настроек)
+  adminKey: '',
   bounds: null,
   miniPos: null,
 };
