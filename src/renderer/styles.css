@@ -266,7 +266,15 @@ button { font: inherit; color: inherit; cursor: pointer; }
   background: transparent;
   color: var(--text);
 }
-.law-item .t { display: block; font-weight: 600; font-size: 13px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.law-item { display: flex; align-items: center; gap: 4px; }
+.law-item .t { flex: 1; min-width: 0; font-weight: 600; font-size: 13px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.law-item.fav-arts .t { color: var(--warn); }
+.law-item .n { margin-left: 6px; font: 600 11px/1 var(--mono); color: var(--muted); }
+/* звёздочка избранного: видна при наведении, у закреплённых — всегда */
+.law-item .fav { flex-shrink: 0; width: 18px; text-align: center; color: var(--muted); opacity: 0; font-size: 14px; line-height: 1; }
+.law-item:hover .fav { opacity: .7; }
+.law-item .fav:hover { opacity: 1; color: var(--warn); }
+.law-item .fav.on { opacity: 1; color: var(--warn); }
 .law-item:hover { background: rgba(255, 255, 255, .05); }
 .law-item.active { background: color-mix(in srgb, var(--accent) 20%, transparent); box-shadow: inset 3px 0 0 var(--accent); }
 .law-item .new { margin-left: 6px; font: 600 10px/1 var(--mono); color: var(--warn); }
@@ -298,6 +306,10 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .art.repealed { opacity: .5; }
 .art-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
 .art-num { font: 600 13px/1 var(--mono); color: var(--accent); white-space: nowrap; }
+.art-fav { align-self: center; margin-right: -4px; padding: 0 2px; border: 0; background: none; color: var(--muted); font-size: 15px; line-height: 1; opacity: .45; }
+.art:hover .art-fav { opacity: .8; }
+.art-fav:hover { opacity: 1; color: var(--warn); }
+.art-fav.on { opacity: 1; color: var(--warn); }
 .art-title { font-weight: 600; }
 .tag {
   font: 600 10.5px/1 var(--mono);

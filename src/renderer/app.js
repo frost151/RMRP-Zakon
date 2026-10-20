@@ -14,7 +14,12 @@ const state = {
   tab: 'case',
   det: null,
   checklist: {},
+  favLaws: [], // ключи законов: 'uk', 'fz74'
+  favArts: [], // статьи: 'uk|37.1', в порядке добавления
 };
+
+// state.lawId для экрана «Избранные статьи»
+const FAV_VIEW = 'favs';
 
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const norm = (s) => s.toLowerCase().replace(/ё/g, 'е');
@@ -88,29 +93,61 @@ function setLaws(laws) {
 
 function orderedLaws() {
   const docs = faction().docs;
-  const main = docs.map((k) => state.laws.find((l) => l.key === k)).filter(Boolean);
-  const rest = state.laws.filter((l) => !main.includes(l)).sort((a, b) => a.title.localeCompare(b.title, 'ru'));
-  return { main, rest };
+  const fav = state.favLaws.map((k) => state.laws.find((l) => l.key === k)).filter(Boolean);
+  const main = docs.map((k) => state.laws.find((l) => l.key === k)).filter((l) => l && !fav.includes(l));
+  const rest = state.laws.filter((l) => !main.includes(l) && !fav.includes(l)).sort((a, b) => a.title.localeCompare(b.title, 'ru'));
+  return { fav, main, rest };
 }
 
 function currentLaw() {
-  const { main, rest } = orderedLaws();
-  return state.laws.find((l) => l.id === state.lawId) || main[0] || rest[0] || null;
+  const { fav, main, rest } = orderedLaws();
+  return state.laws.find((l) => l.id === state.lawId) || main[0] || fav[0] || rest[0] || null;
+}
+
+// --- Избранное ---
+
+const artKey = (law, a) => `${law.key}|${a.num}`;
+
+function toggleFav(list, key) {
+  const arr = state[list];
+  const i = arr.indexOf(key);
+  if (i >= 0) arr.splice(i, 1);
+  else arr.push(key);
+  store.set(list, arr);
+}
+
+// Избранные статьи, которые есть в текущей базе (статью могли убрать с форума)
+function favArticles() {
+  const out = [];
+  for (const k of state.favArts) {
+    const [key, num] = k.split('|');
+    const law = state.laws.find((l) => l.key === key);
+    const a = law && law.articles.find((x) => x.num === num);
+    if (a) out.push({ a, law });
+  }
+  return out;
 }
 
 const WEEK = 7 * 24 * 3600;
 function lawItem(l, active) {
   const fresh = l.lastTime && Date.now() / 1000 - l.lastTime < WEEK;
+  const on = state.favLaws.includes(l.key);
   return `<button class="law-item${active ? ' active' : ''}" data-law="${esc(l.id)}" title="${esc(l.title)}">
     <span class="t">${esc(l.short)}${fresh ? '<span class="new">ОБН</span>' : ''}</span>
+    <span class="fav${on ? ' on' : ''}" data-fav-law="${esc(l.key)}" title="${on ? 'Убрать из избранного' : 'В избранное'}">${on ? '★' : '☆'}</span>
   </button>`;
 }
 
 function renderLaws() {
-  const { main, rest } = orderedLaws();
-  const cur = state.query ? null : currentLaw();
+  const { fav, main, rest } = orderedLaws();
+  const favView = !state.query && state.lawId === FAV_VIEW;
+  const cur = state.query || favView ? null : currentLaw();
   const item = (l) => lawItem(l, cur && l.id === cur.id);
+  const arts = favArticles().length;
   $('laws').innerHTML = `
+    ${fav.length || arts ? `<h4>Избранное</h4>
+      ${arts ? `<button class="law-item fav-arts${favView ? ' active' : ''}" data-law="${FAV_VIEW}"><span class="t">★ Статьи<span class="n">${arts}</span></span></button>` : ''}
+      ${fav.map(item).join('')}` : ''}
     <h4>Для: ${esc(faction().name)}</h4>
     ${main.map(item).join('') || '<p class="hint">Нет загруженных законов</p>'}
     ${rest.length ? `<h4>Прочее законодательство</h4>${rest.map(item).join('')}` : ''}`;
@@ -166,8 +203,10 @@ function articleHtml(a, law, opts = {}) {
     tags.push(`<span class="tag amended" title="Поправка от ${d}">${what} ${d}</span>`);
   }
   const long = a.text.length > 420;
+  const fav = state.favArts.includes(artKey(law, a));
   return `<article class="art${a.repealed ? ' repealed' : ''}">
     <div class="art-head">
+      <button class="art-fav${fav ? ' on' : ''}" data-fav-art="${esc(artKey(law, a))}" title="${fav ? 'Убрать из избранного' : 'В избранное'}">${fav ? '★' : '☆'}</button>
       ${opts.showLaw ? `<span class="art-law">${esc(law.short)}</span>` : ''}
       <span class="art-num">Ст. ${esc(a.num)}</span>
       <span class="art-title">${highlight(a.title, opts.words || [])}</span>
@@ -200,6 +239,17 @@ function renderLaw(law) {
       </div>
     </div>
     ${body || (law.preamble ? `<div class="art"><div class="art-text">${esc(law.preamble)}</div></div>` : '<div class="empty">В этой теме не найдено статей.</div>')}`;
+}
+
+function renderFavs() {
+  const list = favArticles();
+  $('viewer').innerHTML = `
+    <div class="law-head">
+      <h1>Избранные статьи</h1>
+      <div class="meta"><span>${list.length} ${plural(list.length, 'статья', 'статьи', 'статей')} · снимите звёздочку, чтобы убрать статью отсюда</span></div>
+    </div>
+    ${list.map(({ a, law }) => articleHtml(a, law, { showLaw: true })).join('') ||
+      '<div class="empty"><h2>Здесь пусто</h2>Нажмите ☆ рядом с номером статьи, чтобы закрепить её здесь.</div>'}`;
 }
 
 // --- Поиск ---
@@ -334,6 +384,7 @@ function renderViewer(keepScroll) {
   if (!state.laws.length) {
     $('viewer').innerHTML = '<div class="empty"><h2>База законов пуста</h2>Загружаем законодательство с форума RMRP… Это нужно только при первом запуске.</div>';
   } else if (state.query) renderSearch();
+  else if (state.lawId === FAV_VIEW) renderFavs();
   else renderLaw(currentLaw());
   $('viewer').scrollTop = keepScroll ? top : 0;
 }
@@ -1073,6 +1124,12 @@ function setupEvents() {
     if (b) selectFaction(b.dataset.faction);
   });
   $('laws').addEventListener('click', (e) => {
+    const star = e.target.closest('[data-fav-law]');
+    if (star) {
+      toggleFav('favLaws', star.dataset.favLaw);
+      renderLaws();
+      return;
+    }
     const b = e.target.closest('[data-law]');
     if (!b) return;
     state.lawId = b.dataset.law;
@@ -1081,6 +1138,20 @@ function setupEvents() {
     renderAll();
   });
   $('viewer').addEventListener('click', (e) => {
+    const star = e.target.closest('[data-fav-art]');
+    if (star) {
+      toggleFav('favArts', star.dataset.favArt);
+      renderLaws();
+      // на экране избранного статья исчезает сразу, в остальных местах меняется только значок
+      if (state.lawId === FAV_VIEW && !state.query) renderViewer(true);
+      else {
+        const on = state.favArts.includes(star.dataset.favArt);
+        star.classList.toggle('on', on);
+        star.textContent = on ? '★' : '☆';
+        star.title = on ? 'Убрать из избранного' : 'В избранное';
+      }
+      return;
+    }
     if (e.target.classList.contains('more')) {
       e.target.previousElementSibling.classList.remove('clamp');
       e.target.remove();
@@ -1251,6 +1322,8 @@ function tickClock() {
   $('appVersion').textContent = init.version ? `v${init.version}` : '';
   $('bezelVersion').textContent = init.version ? `v${init.version}` : '';
   state.picks = store.get('picks', []);
+  state.favLaws = store.get('favLaws', []);
+  state.favArts = store.get('favArts', []);
   state.checklist = store.get('checklist', {});
   state.bail = { president: false, banned: false, term: null, ...store.get('bail', {}) };
   state.tab = store.get('tab', 'case');
