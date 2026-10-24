@@ -96,15 +96,22 @@ function createMini() {
 }
 
 function updateMini() {
-  if (!mini || mini.isDestroyed()) return;
+  if (!alive(mini) || !alive(win)) return;
   const tabletHidden = !win.isVisible() || win.isMinimized();
   const need = detention.s.running && tabletHidden;
   if (need && !mini.isVisible()) mini.showInactive();
   if (!need && mini.isVisible()) mini.hide();
 }
 
+// Окно уже закрыто во время выхода — к нему нельзя обращаться (иначе «Object has been destroyed»)
+const alive = (w) => w && !w.isDestroyed();
+
 function broadcast(channel, payload) {
-  for (const w of [win, mini]) if (w && !w.isDestroyed()) w.webContents.send(channel, payload);
+  for (const w of [win, mini]) if (alive(w)) w.webContents.send(channel, payload);
+}
+
+function sendToWin(channel, payload) {
+  if (alive(win)) win.webContents.send(channel, payload);
 }
 
 function applyAlwaysOnTop() {
@@ -113,7 +120,7 @@ function applyAlwaysOnTop() {
 }
 
 function showWindow() {
-  if (!win) return;
+  if (!alive(win)) return;
   if (win.isMinimized()) win.restore();
   win.show();
   win.focus();
@@ -121,6 +128,7 @@ function showWindow() {
 }
 
 function toggleWindow() {
+  if (!alive(win)) return;
   if (win.isVisible() && win.isFocused()) win.hide();
   else showWindow();
 }
@@ -185,7 +193,7 @@ ipcMain.handle('online', () => presence.online(settings.get().adminKey));
 
 ipcMain.handle('laws:update', async () => {
   try {
-    return await store.update((p) => win && win.webContents.send('laws:progress', p));
+    return await store.update((p) => sendToWin('laws:progress', p));
   } catch (e) {
     return { error: e.message };
   }
@@ -209,6 +217,7 @@ ipcMain.on('det', (_, action, arg) => {
 ipcMain.on('clipboard', (_, text) => clipboard.writeText(String(text)));
 
 ipcMain.on('win', (_, action) => {
+  if (!alive(win)) return;
   if (action === 'minimize') win.minimize();
   if (action === 'hide') win.hide();
   if (action === 'show') showWindow();
@@ -227,7 +236,7 @@ app.whenReady().then(() => {
   createWindow();
   createMini();
   presence = setupPresence(settings, app.getVersion());
-  setupUpdater((channel, payload) => win && win.webContents.send(channel, payload));
+  setupUpdater(sendToWin);
   const errors = registerHotkeys(settings.get().hotkeys);
   for (const [name, err] of Object.entries(errors)) console.warn(`Горячая клавиша ${name}: ${err}`);
 });
